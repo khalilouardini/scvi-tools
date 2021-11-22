@@ -28,8 +28,6 @@ class Trainer(pl.Trainer):
         Number of gpus to train on (int) or which GPUs to train on (list or str) applied per node
     benchmark
         If true enables cudnn.benchmark, which improves speed when inputs are fixed size
-    flush_logs_every_n_steps
-        How often to flush logs to disk. By default, flushes after training complete.
     check_val_every_n_epoch
         Check val every n train epochs. By default, val is not checked, unless `early_stopping` is `True`.
     max_epochs
@@ -60,8 +58,10 @@ class Trainer(pl.Trainer):
     early_stopping_patience
         Number of validation epochs with no improvement after which training will be stopped.
     early_stopping_mode
-            In 'min' mode, training will stop when the quantity monitored has stopped decreasing
-            and in 'max' mode it will stop when the quantity monitored has stopped increasing.
+        In 'min' mode, training will stop when the quantity monitored has stopped decreasing
+        and in 'max' mode it will stop when the quantity monitored has stopped increasing.
+    enable_progress_bar
+        Whether to enable or disable the default PyTorch Lightning progress bar.
     progress_bar_refresh_rate
         How often to refresh progress bar (in steps). Value 0 disables progress bar.
     simple_progress_bar
@@ -98,6 +98,7 @@ class Trainer(pl.Trainer):
         early_stopping_min_delta: float = 0.00,
         early_stopping_patience: int = 45,
         early_stopping_mode: Literal["min", "max"] = "min",
+        enable_progress_bar: bool = False,
         progress_bar_refresh_rate: int = 1,
         simple_progress_bar: bool = True,
         logger: Union[Optional[LightningLoggerBase], bool] = None,
@@ -138,7 +139,6 @@ class Trainer(pl.Trainer):
         super().__init__(
             gpus=gpus,
             benchmark=benchmark,
-            flush_logs_every_n_steps=flush_logs_every_n_steps,
             check_val_every_n_epoch=check_val_every_n_epoch,
             max_epochs=max_epochs,
             default_root_dir=default_root_dir,
@@ -148,6 +148,7 @@ class Trainer(pl.Trainer):
             logger=logger,
             log_every_n_steps=log_every_n_steps,
             replace_sampler_ddp=replace_sampler_ddp,
+            enable_progress_bar=enable_progress_bar,
             **kwargs,
         )
 
@@ -166,6 +167,15 @@ class Trainer(pl.Trainer):
                 action="ignore",
                 category=UserWarning,
                 message="One of given dataloaders is None and it will be skipped",
+            )
+            # bug in pytorch lightning, assumes SequentialSampler
+            # https://github.com/PyTorchLightning/pytorch-lightning/blob/
+            # 48cb38ac5dd0159c8f7c5189c888dfd04a2ed34b/pytorch_lightning/
+            # trainer/data_loading.py#L311-L314
+            warnings.filterwarnings(
+                action="ignore",
+                category=UserWarning,
+                message="Your `val_dataloader` has `shuffle=True`",
             )
             if isinstance(args[0], PyroTrainingPlan):
                 warnings.filterwarnings(
