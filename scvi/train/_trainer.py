@@ -38,14 +38,14 @@ class Trainer(pl.Trainer):
         Default path for logs and weights when no logger/ckpt_callback passed.
         Defaults to `scvi.settings.logging_dir`. Can be remote file paths such as
         s3://mybucket/path or ‘hdfs://path/’
-    checkpoint_callback
+    enable_checkpointing
         If `True`, enable checkpointing. It will configure a default ModelCheckpoint
         callback if there is no user-defined ModelCheckpoint in `callbacks`.
     num_sanity_val_steps
         Sanity check runs n validation batches before starting the training routine.
         Set it to -1 to run all batches in all validation dataloaders.
-    weights_summary
-        Prints a summary of the weights when training begins.
+    enable_model_summary
+        Whether to enable or disable the model summarization.
     early_stopping
         Whether to perform early stopping with respect to the validation set. This
         automatically adds a :class:`~pytorch_lightning.callbacks.early_stopping.EarlyStopping`
@@ -88,9 +88,9 @@ class Trainer(pl.Trainer):
         check_val_every_n_epoch: Optional[int] = None,
         max_epochs: int = 400,
         default_root_dir: Optional[str] = None,
-        checkpoint_callback: bool = False,
+        enable_checkpointing: bool = False,
         num_sanity_val_steps: int = 0,
-        weights_summary: Optional[Literal["top", "full"]] = None,
+        enable_model_summary: bool = False,
         early_stopping: bool = False,
         early_stopping_monitor: Literal[
             "elbo_validation", "reconstruction_loss_validation", "kl_local_validation"
@@ -142,11 +142,10 @@ class Trainer(pl.Trainer):
             check_val_every_n_epoch=check_val_every_n_epoch,
             max_epochs=max_epochs,
             default_root_dir=default_root_dir,
-            checkpoint_callback=checkpoint_callback,
+            enable_checkpointing=enable_checkpointing,
             num_sanity_val_steps=num_sanity_val_steps,
-            weights_summary=weights_summary,
+            enable_model_summary=enable_model_summary,
             logger=logger,
-            progress_bar_refresh_rate=progress_bar_refresh_rate,
             log_every_n_steps=log_every_n_steps,
             replace_sampler_ddp=replace_sampler_ddp,
             **kwargs,
